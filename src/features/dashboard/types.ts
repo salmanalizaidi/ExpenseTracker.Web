@@ -1,29 +1,54 @@
-import type { Expense } from "@/features/expenses/types";
+/**
+ * 0 = Income, 1 = Expense — mirrors the C# TransactionType enum.
+ */
+export type TransactionType = 0 | 1;
+
+export interface BalanceSummary {
+  totalBalance: number;
+  monthlySavings: number;
+  lastMonthSavings: number;
+}
+
+export interface MonthlySpending {
+  spent: number;
+  limit: number;
+  remaining: number;
+  daysLeft: number;
+}
+
+export interface SavingsGoalSummary {
+  id: string;
+  name: string;
+  currentAmount: number;
+  targetAmount: number;
+  progressPercent: number;
+  deadline: string;
+}
 
 export interface CategoryDistribution {
+  categoryId: string;
+  categoryName: string;
+  icon?: string;
+  color?: string;
+  amount: number;
+  percent: number;
+}
+
+export interface RecentTransaction {
   id: string;
-  label: string;
-  percent: number;
-  color: string;
-}
-
-export interface SavingsGoal {
   title: string;
-  current: number;
-  target: number;
-  percent: number;
+  amount: number;
+  type: TransactionType;
+  categoryName: string;
+  categoryIcon?: string;
+  categoryColor?: string;
+  date: string;
 }
 
-export interface DashboardSummary {
-  userName: string;
-  greeting: string;
-  savingsDelta: number;
-  totalBalance: number;
-  monthSpending: number;
-  remainingBudget: number;
-  currency: string;
-  currentMonth: string;
-  savingsGoal: SavingsGoal;
-  categories: CategoryDistribution[];
-  recentExpenses: Expense[];
+export interface DashboardData {
+  balance: BalanceSummary;
+  monthlySpending: MonthlySpending;
+  savingsGoal?: SavingsGoalSummary;
+  categoryDistribution: CategoryDistribution[];
+  recentTransactions: RecentTransaction[];
 }

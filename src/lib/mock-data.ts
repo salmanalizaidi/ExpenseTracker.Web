@@ -1,5 +1,4 @@
 import type { Expense } from "@/features/expenses/types";
-import type { DashboardSummary } from "@/features/dashboard/types";
 import type { BudgetCategory, BudgetOverview } from "@/features/budget/types";
 
 const today = new Date().toISOString().split("T")[0];
@@ -67,33 +66,6 @@ export const mockExpenses: Expense[] = [
     note: "Salary Deposit",
   },
 ];
-
-export const mockDashboardSummary: DashboardSummary = {
-  userName: "Alex",
-  greeting: "Good morning",
-  savingsDelta: 1240,
-  totalBalance: 42850.2,
-  monthSpending: 3120.45,
-  remainingBudget: 879.55,
-  currency: "USD",
-  currentMonth: new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date()),
-  savingsGoal: {
-    title: "Vacation in Italy",
-    current: 3250,
-    target: 5000,
-    percent: 65,
-  },
-  categories: [
-    { id: "housing", label: "Housing", percent: 75, color: "text-primary" },
-    { id: "food", label: "Food", percent: 45, color: "text-secondary" },
-    { id: "travel", label: "Travel", percent: 20, color: "text-tertiary" },
-    { id: "other", label: "Others", percent: 10, color: "text-outline" },
-  ],
-  recentExpenses: mockExpenses.slice(0, 4),
-};
 
 export const mockBudgetOverview: BudgetOverview = {
   monthlyLimit: 4500,
