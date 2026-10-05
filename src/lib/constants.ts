@@ -9,6 +9,7 @@ export const ROUTES = {
   BUDGET: "/budget",
   REPORTS: "/reports",
   SETTINGS: "/settings",
+  PROFILE: "/profile",
 } as const;
 
 export const NAV_ITEMS = [
@@ -32,6 +33,7 @@ export const MOBILE_PAGE_TITLES: Record<string, string> = {
   [ROUTES.BUDGET]: "Budget",
   [ROUTES.REPORTS]: "Reports",
   [ROUTES.SETTINGS]: "Settings",
+  [ROUTES.PROFILE]: "Profile",
 };
 
 export const SEARCH_PLACEHOLDERS: Record<string, string> = {

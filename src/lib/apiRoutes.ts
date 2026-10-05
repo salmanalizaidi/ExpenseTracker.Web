@@ -27,5 +27,6 @@ export const API_ROUTES = {
   },
   user: {
     profile: "/api/user/profile",
+    changePassword: "/api/user/change-password",
   },
 } as const;
