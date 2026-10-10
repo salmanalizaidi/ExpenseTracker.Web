@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { APP_NAME, MOBILE_PAGE_TITLES, SEARCH_PLACEHOLDERS } from "@/lib/constants";
 import { Icon } from "@/components/ui/Icon";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { apiClient } from "@/lib/apiClient";
 import { API_ROUTES } from "@/lib/apiRoutes";
 import type { UserProfile } from "@/features/profile/types";
@@ -15,11 +16,18 @@ export function TopBar() {
   const pathname = usePathname();
   const mobileTitle = MOBILE_PAGE_TITLES[pathname] ?? APP_NAME;
   const searchPlaceholder = SEARCH_PLACEHOLDERS[pathname] ?? "Search transactions...";
+  const { user: authUser } = useAuth();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  // Lazily load profile once the dropdown is opened the first time
+  // Derive initials immediately from the cookie-backed AuthContext user —
+  // no API call needed, available on first render.
+  const fallbackInitials = authUser?.name
+    ? authUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
+    : "";
+
+  // Lazily load full profile once the dropdown is opened the first time
   useEffect(() => {
     if (!dropdownOpen || profile !== null) return;
     apiClient
@@ -31,9 +39,11 @@ export function TopBar() {
   const toggleDropdown = () => setDropdownOpen((o) => !o);
 
   const avatarSrc = profile?.avatarBase64 || null;
-  const initials = (
-    (profile?.firstName?.[0] ?? "") + (profile?.lastName?.[0] ?? "")
-  ).toUpperCase();
+  // Use precise profile-derived initials once the API responds,
+  // fall back to cookie-derived initials immediately on load.
+  const initials = profile
+    ? ((profile.firstName?.[0] ?? "") + (profile.lastName?.[0] ?? "")).toUpperCase()
+    : fallbackInitials;
 
   return (
     <header className="flex justify-between items-center h-16 px-lg w-full bg-surface shadow-sm sticky top-0 z-40">
