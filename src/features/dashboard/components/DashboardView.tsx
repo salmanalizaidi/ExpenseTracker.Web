@@ -138,11 +138,11 @@ export function DashboardView({ data }: DashboardViewProps) {
                 </>
               ) : (
                 <>
-                  You spent{" "}
+                  Your savings are down{" "}
                   <span className="rounded-lg bg-error/20 px-2 py-0.5 text-white">
                     {formatCurrency(Math.abs(savingsDelta))}
                   </span>{" "}
-                  more than last month. Let&apos;s adjust!
+                  vs last month. Let&apos;s adjust!
                 </>
               )}
             </h2>

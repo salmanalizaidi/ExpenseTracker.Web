@@ -59,6 +59,7 @@ import {
   MdCommute,
   MdCheckCircle,
   MdCancel,
+  MdLightMode,
 } from "react-icons/md";
 
 const iconMap: Record<string, IconType> = {
@@ -121,6 +122,7 @@ const iconMap: Record<string, IconType> = {
   commute: MdCommute,
   check_circle: MdCheckCircle,
   cancel: MdCancel,
+  light_mode: MdLightMode,
 };
 
 export function Icon({
