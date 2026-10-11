@@ -1,8 +1,11 @@
-import { ExpenseList } from "@/features/expenses/components/ExpenseList";
-import { expenseApi } from "@/features/expenses/services/expenseApi";
+import { ExpenseView } from "@/features/expenses/components/ExpenseView";
+import { fetchTransactions, fetchCategories } from "@/features/expenses/services/transactionApi.server";
 
 export default async function ExpensesPage() {
-  const expenses = await expenseApi.getExpenses();
+  const [transactions, categories] = await Promise.all([
+    fetchTransactions(),
+    fetchCategories(),
+  ]);
 
-  return <ExpenseList expenses={expenses} />;
+  return <ExpenseView initialTransactions={transactions} categories={categories} />;
 }

@@ -23,6 +23,6 @@ export interface TransactionResponse {
   description?: string;
   date: string;
   categoryId: string;
-  categoryName: string;
+  categoryName: string | null;
   createdAt: string;
 }

@@ -16,23 +16,24 @@ import type {
   TransactionType,
 } from "@/features/transactions/types";
 
-// ─── Type toggle ─────────────────────────────────────────────────────────────
+// ─── Type toggle ──────────────────────────────────────────────────────────────
 
 interface TypeToggleProps {
   value: TransactionType;
   onChange: (value: TransactionType) => void;
+  disabled?: boolean;
 }
 
-function TypeToggle({ value, onChange }: TypeToggleProps) {
+function TypeToggle({ value, onChange, disabled }: TypeToggleProps) {
   return (
     <div>
       <p className="mb-xs text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
-        Transaction Type
+        Transaction Type {disabled && <span className="normal-case font-normal text-outline">(cannot be changed)</span>}
       </p>
-      <div className="grid grid-cols-2 gap-sm rounded-xl border border-outline-variant p-xs">
+      <div className={`grid grid-cols-2 gap-sm rounded-xl border border-outline-variant p-xs ${disabled ? "opacity-60 pointer-events-none" : ""}`}>
         <button
           type="button"
-          onClick={() => onChange(1)}
+          onClick={() => !disabled && onChange(1)}
           className={`flex items-center justify-center gap-xs rounded-lg px-md py-sm text-sm font-bold transition-all ${
             value === 1
               ? "bg-error/10 text-error ring-1 ring-error/30"
@@ -43,7 +44,7 @@ function TypeToggle({ value, onChange }: TypeToggleProps) {
         </button>
         <button
           type="button"
-          onClick={() => onChange(0)}
+          onClick={() => !disabled && onChange(0)}
           className={`flex items-center justify-center gap-xs rounded-lg px-md py-sm text-sm font-bold transition-all ${
             value === 0
               ? "bg-secondary/10 text-secondary ring-1 ring-secondary/30"
@@ -97,20 +98,33 @@ interface AddTransactionDialogProps {
   onClose: () => void;
   /** Called after a successful save so the parent can refresh its data. */
   onSuccess?: (txn: TransactionResponse) => void;
+  /**
+   * When provided the dialog switches to EDIT mode:
+   * - Form is pre-filled from this transaction
+   * - Title shows "Edit Transaction"
+   * - Submit calls PUT instead of POST
+   * - TypeToggle is disabled (type cannot change after creation)
+   */
+  initialValues?: TransactionResponse;
 }
 
 export function AddTransactionDialog({
   open,
   onClose,
   onSuccess,
+  initialValues,
 }: AddTransactionDialogProps) {
-  // Form state
-  const [type, setType] = useState<TransactionType>(1); // default: Expense
-  const [amount, setAmount] = useState("");
-  const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState(todayIso());
-  const [description, setDescription] = useState("");
+  const isEditMode = !!initialValues;
+
+  // Form state — seeded from initialValues when in edit mode
+  const [type, setType] = useState<TransactionType>(initialValues?.type ?? 1);
+  const [amount, setAmount] = useState(initialValues ? String(initialValues.amount) : "");
+  const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
+  const [date, setDate] = useState(
+    initialValues ? toDateInputValue(initialValues.date) : todayIso(),
+  );
+  const [description, setDescription] = useState(initialValues?.description ?? "");
 
   // Categories
   const [categories, setCategories] = useState<Category[]>([]);
@@ -118,6 +132,24 @@ export function AddTransactionDialog({
 
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Re-seed form whenever initialValues changes (switching between different rows to edit)
+  useEffect(() => {
+    if (initialValues) {
+      setType(initialValues.type);
+      setAmount(String(initialValues.amount));
+      setTitle(initialValues.title);
+      setCategoryId(initialValues.categoryId);
+      setDate(toDateInputValue(initialValues.date));
+      setDescription(initialValues.description ?? "");
+    } else {
+      setType(1);
+      setAmount("");
+      setTitle("");
+      setDate(todayIso());
+      setDescription("");
+    }
+  }, [initialValues]);
 
   // Load categories when dialog opens
   useEffect(() => {
@@ -128,7 +160,8 @@ export function AddTransactionDialog({
       .get<Category[]>(API_ROUTES.category.base)
       .then((cats) => {
         setCategories(cats);
-        if (cats.length > 0 && !categoryId) {
+        // In add mode only, auto-select first category if none selected
+        if (cats.length > 0 && !categoryId && !isEditMode) {
           setCategoryId(cats[0].id);
         }
       })
@@ -150,7 +183,7 @@ export function AddTransactionDialog({
   }
 
   function handleClose() {
-    resetForm();
+    if (!isEditMode) resetForm();
     onClose();
   }
 
@@ -162,22 +195,41 @@ export function AddTransactionDialog({
       return;
     }
 
-    const payload: CreateTransactionPayload = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-      amount: parseFloat(amount),
-      type,
-      date: new Date(date).toISOString(),
-      categoryId,
-    };
-
     setIsSubmitting(true);
     try {
-      const txn = await apiClient.post<TransactionResponse>(
-        API_ROUTES.transaction.base,
-        payload,
-      );
-      toast.success("Transaction saved!");
+      let txn: TransactionResponse;
+
+      if (isEditMode && initialValues) {
+        // Edit mode — PUT with UpdateTransactionDto shape (no type field)
+        const payload = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          amount: parseFloat(amount),
+          date: new Date(date).toISOString(),
+          categoryId,
+        };
+        txn = await apiClient.put<TransactionResponse>(
+          API_ROUTES.transaction.byId(initialValues.id),
+          payload,
+        );
+        toast.success("Transaction updated!");
+      } else {
+        // Add mode — POST with CreateTransactionDto shape (includes type)
+        const payload: CreateTransactionPayload = {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          amount: parseFloat(amount),
+          type,
+          date: new Date(date).toISOString(),
+          categoryId,
+        };
+        txn = await apiClient.post<TransactionResponse>(
+          API_ROUTES.transaction.base,
+          payload,
+        );
+        toast.success("Transaction saved!");
+      }
+
       onSuccess?.(txn);
       handleClose();
     } catch (err) {
@@ -197,12 +249,16 @@ export function AddTransactionDialog({
     <Dialog
       open={open}
       onClose={handleClose}
-      title="Add New Transaction"
-      description="Record an expense or credit to your ledger."
+      title={isEditMode ? "Edit Transaction" : "Add New Transaction"}
+      description={
+        isEditMode
+          ? "Update the details of this transaction."
+          : "Record an expense or credit to your ledger."
+      }
     >
       <form className="space-y-md" onSubmit={handleSubmit}>
-        {/* Type toggle */}
-        <TypeToggle value={type} onChange={setType} />
+        {/* Type toggle — disabled in edit mode */}
+        <TypeToggle value={type} onChange={setType} disabled={isEditMode} />
 
         {/* Amount */}
         <AmountInput value={amount} onChange={setAmount} />
@@ -275,7 +331,7 @@ export function AddTransactionDialog({
             Cancel
           </Button>
           <Button type="submit" variant="primary" isLoading={isSubmitting}>
-            Save Transaction
+            {isEditMode ? "Update Transaction" : "Save Transaction"}
           </Button>
         </div>
       </form>
@@ -287,4 +343,9 @@ export function AddTransactionDialog({
 
 function todayIso(): string {
   return new Date().toISOString().split("T")[0];
+}
+
+/** Converts a backend ISO datetime string to a yyyy-MM-dd date input value */
+function toDateInputValue(iso: string): string {
+  return iso.split("T")[0];
 }
