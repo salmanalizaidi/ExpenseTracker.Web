@@ -60,6 +60,12 @@ import {
   MdCheckCircle,
   MdCancel,
   MdLightMode,
+  MdEdit,
+  MdArrowOutward,
+  MdReceiptLong,
+  MdInsights,
+  MdArrowUpward,
+  MdFileDownload,
 } from "react-icons/md";
 
 const iconMap: Record<string, IconType> = {
@@ -123,6 +129,12 @@ const iconMap: Record<string, IconType> = {
   check_circle: MdCheckCircle,
   cancel: MdCancel,
   light_mode: MdLightMode,
+  edit: MdEdit,
+  arrow_outward: MdArrowOutward,
+  receipt_long: MdReceiptLong,
+  insights: MdInsights,
+  arrow_upward: MdArrowUpward,
+  file_download: MdFileDownload,
 };
 
 export function Icon({
